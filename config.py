@@ -1,10 +1,10 @@
-AWS_REGION="ap-southeast-2"
+AWS_REGION = "ap-southeast-2"
+
+S3_BUCKET = "ai-disaster-response-reports-arsath"
+
+DYNAMODB_TABLE = "incident-analysis"
+
+SNS_TOPIC_ARN = "arn:aws:sns:ap-southeast-2:755642981171:disaster-alerts"
 
 
-S3_BUCKET="YOUR_BUCKET_NAME"
-
-
-DYNAMODB_TABLE="incident-analysis"
-
-
-SNS_TOPIC="YOUR_TOPIC_ARN"
+BEDROCK_MODEL_ID = "amazon.nova-lite-v1:0"
