@@ -7,7 +7,7 @@ sns = boto3.client(
 )
 
 
-SNS_TOPIC_ARN = "YOUR_SNS_TOPIC_ARN"
+SNS_TOPIC_ARN = "arn:aws:sns:ap-southeast-2:755642981171:disaster-alerts"
 
 
 def lambda_handler(event, context):
