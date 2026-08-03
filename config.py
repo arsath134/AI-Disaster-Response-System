@@ -1,1 +1,10 @@
+AWS_REGION="ap-southeast-2"
 
+
+S3_BUCKET="YOUR_BUCKET_NAME"
+
+
+DYNAMODB_TABLE="incident-analysis"
+
+
+SNS_TOPIC="YOUR_TOPIC_ARN"
