@@ -20,11 +20,13 @@ SNS_TOPIC_ARN="arn:aws:sns:ap-southeast-2:755642981171:disaster-alerts"
 def lambda_handler(event,context):
 
 
+    print(event)
+
+
     for record in event["Records"]:
 
 
         if record["eventName"]=="INSERT":
-
 
 
             data=record["dynamodb"]["NewImage"]
@@ -35,8 +37,10 @@ def lambda_handler(event,context):
 
 
 
-            if severity in ["HIGH","CRITICAL"]:
-
+            if severity in [
+                "HIGH",
+                "CRITICAL"
+            ]:
 
 
                 message=f"""
@@ -62,7 +66,7 @@ Severity:
 
 
 
-Reporter Safety Instruction:
+Reporter Safety:
 
 {data['first_person']['S']}
 
@@ -71,8 +75,6 @@ Reporter Safety Instruction:
 Public / Rescue Instruction:
 
 {data['third_person']['S']}
-
-
 
 """
 
