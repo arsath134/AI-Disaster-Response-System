@@ -1,1 +1,37 @@
+body{
 
+font-family:Arial;
+
+background:#f4f4f4;
+
+text-align:center;
+
+padding:40px;
+
+}
+
+
+input,textarea{
+
+width:300px;
+
+padding:10px;
+
+margin:10px;
+
+}
+
+
+button{
+
+padding:12px 25px;
+
+background:black;
+
+color:white;
+
+border:none;
+
+cursor:pointer;
+
+}
