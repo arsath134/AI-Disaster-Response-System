@@ -5,7 +5,7 @@ region:"ap-southeast-2"
 });
 
 
-const bucketName="YOUR_BUCKET_NAME";
+const bucketName = "ai-disaster-response-reports-arsath";
 
 
 const s3=new AWS.S3();
