@@ -1,57 +1,100 @@
 import json
 import boto3
+import urllib.parse
 from datetime import datetime
 
 
-dynamodb=boto3.resource("dynamodb")
+s3 = boto3.client("s3")
 
+dynamodb = boto3.resource(
+    "dynamodb",
+    region_name="ap-southeast-2"
+)
 
-table=dynamodb.Table(
-"incident-analysis"
+table = dynamodb.Table(
+    "incident-analysis"
 )
 
 
 
-def lambda_handler(event,context):
+def analyze_disaster(description):
+
+    text = description.lower()
+
+    if "fire" in text:
+        return "CRITICAL"
+
+    elif "flood" in text:
+        return "HIGH"
+
+    elif "earthquake" in text:
+        return "CRITICAL"
+
+    elif "storm" in text:
+        return "HIGH"
+
+    else:
+        return "LOW"
 
 
-    record=event["Records"][0]
+
+def lambda_handler(event, context):
+
+    record = event["Records"][0]
 
 
-    bucket=record["s3"]["bucket"]["name"]
+    bucket = record["s3"]["bucket"]["name"]
 
-    file=record["s3"]["object"]["key"]
+    key = urllib.parse.unquote_plus(
+        record["s3"]["object"]["key"]
+    )
 
 
-    result={
+    response = s3.get_object(
+        Bucket=bucket,
+        Key=key
+    )
 
-        "report":file,
 
-        "severity":"HIGH",
+    report = json.loads(
+        response["Body"].read()
+    )
 
-        "analysis":
-        "Emergency situation detected",
 
-        "time":
-        datetime.now().isoformat()
+    severity = analyze_disaster(
+        report["description"]
+    )
+
+
+    item = {
+
+        "report": key,
+
+        "location": report["location"],
+
+        "type": report["type"],
+
+        "description": report["description"],
+
+        "severity": severity,
+
+        "status": "OPEN",
+
+        "time": datetime.now().isoformat()
 
     }
 
 
-
     table.put_item(
-
-        Item=result
-
+        Item=item
     )
 
 
     return {
 
-
         "statusCode":200,
 
         "body":
-        json.dumps(result)
+        json.dumps(item)
 
     }
