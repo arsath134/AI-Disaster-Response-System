@@ -1,1 +1,50 @@
+<!DOCTYPE html>
+<html>
 
+<head>
+
+<title>Report Disaster</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body>
+
+
+<h1>Submit Disaster Report</h1>
+
+
+<input id="location" placeholder="Location">
+
+<br>
+
+
+<input id="type" placeholder="Disaster Type">
+
+<br>
+
+
+<textarea id="description"
+placeholder="Describe the incident">
+</textarea>
+
+
+<br>
+
+
+<button onclick="submitReport()">
+Submit
+</button>
+
+
+
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.12.min.js"></script>
+
+<script src="js/app.js"></script>
+
+
+</body>
+
+</html>
