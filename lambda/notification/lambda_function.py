@@ -1,42 +1,79 @@
 import boto3
 
 
-sns = boto3.client(
+
+sns=boto3.client(
+
     "sns",
+
     region_name="ap-southeast-2"
+
 )
 
 
-SNS_TOPIC_ARN = "arn:aws:sns:ap-southeast-2:755642981171:disaster-alerts"
+
+SNS_TOPIC_ARN="arn:aws:sns:ap-southeast-2:755642981171:disaster-alerts"
 
 
-def lambda_handler(event, context):
+
+
+def lambda_handler(event,context):
+
 
     for record in event["Records"]:
 
-        if record["eventName"] == "INSERT":
 
-            data = record["dynamodb"]["NewImage"]
-
-            severity = data["severity"]["S"]
+        if record["eventName"]=="INSERT":
 
 
-            if severity in ["HIGH", "CRITICAL"]:
 
-                message = f"""
+            data=record["dynamodb"]["NewImage"]
+
+
+
+            severity=data["severity"]["S"]
+
+
+
+            if severity in ["HIGH","CRITICAL"]:
+
+
+
+                message=f"""
+
 🚨 DISASTER ALERT 🚨
 
+
 Location:
+
 {data['location']['S']}
 
-Type:
+
+
+Disaster Type:
+
 {data['type']['S']}
 
+
+
 Severity:
+
 {severity}
 
-Description:
-{data['description']['S']}
+
+
+Reporter Safety Instruction:
+
+{data['first_person']['S']}
+
+
+
+Public / Rescue Instruction:
+
+{data['third_person']['S']}
+
+
+
 """
 
 
@@ -51,10 +88,9 @@ Description:
                 )
 
 
+
     return {
 
-        "statusCode": 200,
-
-        "body": "Notification completed"
+        "status":"completed"
 
     }
