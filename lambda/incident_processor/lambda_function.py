@@ -1,15 +1,7 @@
 import json
 import boto3
-import urllib.parse
-from datetime import datetime
-
-
-s3 = boto3.client("s3")
-
-bedrock = boto3.client(
-    "bedrock-runtime",
-    region_name="ap-southeast-2"
-)
+import uuid
+import datetime
 
 
 dynamodb = boto3.resource(
@@ -18,205 +10,82 @@ dynamodb = boto3.resource(
 )
 
 
-table = dynamodb.Table("incident-analysis")
+TABLE_NAME = "incident-analysis"
+
+
+table = dynamodb.Table(TABLE_NAME)
 
 
 
 def lambda_handler(event, context):
 
-    print("===== INCIDENT PROCESSOR START =====")
+    print(json.dumps(event))
 
 
-    record = event["Records"][0]
+    try:
 
+        body = json.loads(
+            event["body"]
+        )
 
-    bucket = record["s3"]["bucket"]["name"]
 
-    key = urllib.parse.unquote_plus(
-        record["s3"]["object"]["key"]
-    )
+        incident_id = str(uuid.uuid4())
 
 
-    print("Bucket:", bucket)
-    print("File:", key)
+        item = {
 
+            "incident_id": incident_id,
 
+            "name": body["name"],
 
-    # Read report from S3
+            "phone": body["phone"],
 
-    response = s3.get_object(
-        Bucket=bucket,
-        Key=key
-    )
+            "location": body["location"],
 
+            "type": body["type"],
 
-    report = json.loads(
-        response["Body"].read().decode("utf-8")
-    )
+            "description": body["description"],
 
+            "timestamp":
+            str(datetime.datetime.utcnow())
 
-    print("REPORT:")
-    print(report)
+        }
 
 
+        table.put_item(
+            Item=item
+        )
 
-    # =========================
-    # BEDROCK AI
-    # =========================
 
+        return {
 
-    prompt = f"""
+            "statusCode":200,
 
-You are an AI Disaster Response Assistant.
+            "body":json.dumps({
 
-Analyze this emergency report.
+                "message":
+                "Emergency report submitted",
 
-Location:
-{report['location']}
+                "incident_id":
+                incident_id
 
-Disaster Type:
-{report['type']}
+            })
 
-Description:
-{report['description']}
+        }
 
 
-Return ONLY JSON:
 
-{{
-"severity":"",
-"first_person":"",
-"third_person":""
-}}
+    except Exception as e:
 
-first_person:
-Give instructions directly to the affected citizen.
+        print(e)
 
-third_person:
-Give instructions for rescue teams and public.
+        return {
 
-"""
+            "statusCode":500,
 
+            "body":
+            json.dumps(
+                str(e)
+            )
 
-    bedrock_response = bedrock.invoke_model(
-
-        modelId="amazon.nova-lite-v1:0",
-
-        body=json.dumps({
-
-            "messages":[
-
-                {
-
-                "role":"user",
-
-                "content":[
-
-                    {
-                    "text":prompt
-                    }
-
-                ]
-
-                }
-
-            ],
-
-            "inferenceConfig":{
-
-                "maxTokens":300,
-
-                "temperature":0.3
-
-            }
-
-        }),
-
-        contentType="application/json",
-
-        accept="application/json"
-
-    )
-
-
-
-    result = json.loads(
-        bedrock_response["body"].read()
-    )
-
-
-
-    ai_text = result["output"]["message"]["content"][0]["text"]
-
-
-
-    start = ai_text.find("{")
-
-    end = ai_text.rfind("}") + 1
-
-
-    ai_result = json.loads(
-        ai_text[start:end]
-    )
-
-
-
-    # =========================
-    # STORE IN DYNAMODB
-    # =========================
-
-
-    item = {
-
-
-        "report":key,
-
-
-        "name":report.get("name","Unknown"),
-
-
-        "email":report.get("email",""),
-
-
-        "location":report["location"],
-
-
-        "type":report["type"],
-
-
-        "description":report["description"],
-
-
-        "severity":ai_result["severity"],
-
-
-        "first_person":ai_result["first_person"],
-
-
-        "third_person":ai_result["third_person"],
-
-
-        "status":"OPEN",
-
-
-        "time":datetime.now().isoformat()
-
-    }
-
-
-
-    table.put_item(
-        Item=item
-    )
-
-
-    print("DynamoDB Insert Completed")
-
-
-    return {
-
-        "statusCode":200,
-
-        "body":json.dumps(item)
-
-    }
+        }
