@@ -14,9 +14,9 @@ The main goal of this project is to reduce the time between reporting a disaster
 6. Amazon SNS sends the emergency alert to the subscribed authority email.
 7. Emergency teams can use the incident details to coordinate the required response.
 
-## 🏗️ AWS Architecture
+                                                    ## 🏗️ AWS Architecture
 
-Citizen
+                                                           Citizen
    │
    ▼
 Web Application
