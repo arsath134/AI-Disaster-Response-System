@@ -17,29 +17,29 @@ The main goal of this project is to reduce the time between reporting a disaster
                                                     ## 🏗️ AWS Architecture
 
                                                            Citizen
-   │
-   ▼
-Web Application
-   │
-   ▼
-Amazon DynamoDB
-   │
-   ▼
-DynamoDB Streams
-   │
-   ▼
-AWS Lambda
-   │
-   ├──────────────► Groq AI
-   │                    │
-   │                    ▼
-   │             Emergency Guidance
-   │
-   ▼
-Amazon SNS
-   │
-   ▼
-📧 Emergency Authority
+                                                              │
+                                                              ▼
+                                                        Web Application
+                                                              │
+                                                              ▼
+                                                        Amazon DynamoDB
+                                                              │
+                                                              ▼
+                                                       DynamoDB Streams
+                                                              │
+                                                              ▼
+                                                          AWS Lambda
+                                                              │
+                                                              ├──────────────► Groq AI
+                                                              │                    │
+                                                              │                    ▼
+                                                              │             Emergency Guidance
+                                                              │
+                                                              ▼
+                                                         Amazon SNS
+                                                              │
+                                                              ▼
+                                                   📧 Emergency Authority
 
 ## ☁️ AWS Services Used
 
