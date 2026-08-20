@@ -1,7 +1,14 @@
 import json
 import boto3
+import urllib.parse
 import uuid
 import datetime
+
+
+s3 = boto3.client(
+    "s3",
+    region_name="ap-southeast-2"
+)
 
 
 dynamodb = boto3.resource(
@@ -10,23 +17,46 @@ dynamodb = boto3.resource(
 )
 
 
-TABLE_NAME = "incident-analysis"
-
-
-table = dynamodb.Table(TABLE_NAME)
-
+table = dynamodb.Table(
+    "incident-analysis"
+)
 
 
 def lambda_handler(event, context):
 
+    print("EVENT:")
     print(json.dumps(event))
 
 
-    try:
+    for record in event["Records"]:
 
-        body = json.loads(
-            event["body"]
+        bucket = record["s3"]["bucket"]["name"]
+
+        key = urllib.parse.unquote_plus(
+            record["s3"]["object"]["key"]
         )
+
+
+        print("Bucket:")
+        print(bucket)
+
+        print("File:")
+        print(key)
+
+
+        response = s3.get_object(
+            Bucket=bucket,
+            Key=key
+        )
+
+
+        data = json.loads(
+            response["Body"].read().decode("utf-8")
+        )
+
+
+        print("JSON DATA:")
+        print(json.dumps(data))
 
 
         incident_id = str(uuid.uuid4())
@@ -36,18 +66,34 @@ def lambda_handler(event, context):
 
             "incident_id": incident_id,
 
-            "name": body["name"],
+            "name": data.get(
+                "name",
+                "Unknown"
+            ),
 
-            "phone": body["phone"],
+            "phone": data.get(
+                "phone",
+                "Unknown"
+            ),
 
-            "location": body["location"],
+            "location": data.get(
+                "location",
+                "Unknown"
+            ),
 
-            "type": body["type"],
+            "type": data.get(
+                "type",
+                "Unknown"
+            ),
 
-            "description": body["description"],
+            "description": data.get(
+                "description",
+                "Unknown"
+            ),
 
-            "timestamp":
-            str(datetime.datetime.utcnow())
+            "created_at": str(
+                datetime.datetime.now()
+            )
 
         }
 
@@ -57,35 +103,15 @@ def lambda_handler(event, context):
         )
 
 
-        return {
-
-            "statusCode":200,
-
-            "body":json.dumps({
-
-                "message":
-                "Emergency report submitted",
-
-                "incident_id":
-                incident_id
-
-            })
-
-        }
+        print("Stored in DynamoDB")
 
 
+    return {
 
-    except Exception as e:
+        "statusCode": 200,
 
-        print(e)
+        "body": json.dumps(
+            "Incident stored successfully"
+        )
 
-        return {
-
-            "statusCode":500,
-
-            "body":
-            json.dumps(
-                str(e)
-            )
-
-        }
+    }
