@@ -29,21 +29,23 @@ GROQ_MODEL = "openai/gpt-oss-20b"
 
 
 # ============================================================
-# SEND SNS ALERT
+# SEND EMAIL ALERT THROUGH SNS
 # ============================================================
 
-def send_alert(message):
+def send_alert(message, disaster_type):
 
     try:
 
         response = sns.publish(
             TopicArn=SNS_TOPIC_ARN,
-            Subject="DISASTER EMERGENCY ALERT",
+
+            Subject=f"DISASTER EMERGENCY ALERT - {disaster_type.upper()}",
+
             Message=message
         )
 
         print("====================================")
-        print("SNS MESSAGE SENT")
+        print("SNS EMAIL ALERT SENT")
         print("SNS Message ID:", response["MessageId"])
         print("====================================")
 
@@ -53,14 +55,15 @@ def send_alert(message):
 
         print("====================================")
         print("SNS ERROR")
-        print(str(error))
         print("====================================")
+
+        print(str(error))
 
         return False
 
 
 # ============================================================
-# GENERATE AI EMERGENCY RESPONSE
+# GENERATE AI RESPONSE FOR RESCUE TEAMS
 # ============================================================
 
 def generate_ai_response(
@@ -75,10 +78,11 @@ def generate_ai_response(
     print("====================================")
 
     prompt = f"""
-You are an AI emergency disaster response assistant.
+You are an AI emergency disaster-response assistant
+helping emergency authorities and rescue teams.
 
 Analyze the following disaster incident and provide
-clear, practical and immediate emergency guidance.
+clear, practical and immediate guidance for responders.
 
 INCIDENT INFORMATION
 
@@ -91,58 +95,56 @@ Situation: {description}
 YOUR RESPONSE MUST CONTAIN EXACTLY TWO SECTIONS.
 
 
-SECTION 1 — AFFECTED PERSON
+SECTION 1 — RESCUE RESPONSE
 
-This section must be written from the affected person's
-FIRST-PERSON perspective.
-
-Use language such as:
-
-"I should..."
-"I must..."
-"I need to..."
-"I should avoid..."
-
-Explain what the affected person should do immediately
-to protect themselves and stay safe.
-
-The instructions must be practical and appropriate for
-the reported disaster.
-
-
-SECTION 2 — RESCUE TEAMS AND HELPERS
-
-This section must be written in THIRD-PERSON perspective.
+Write this section from the perspective of emergency
+responders.
 
 Use language such as:
 
 "Rescue teams should..."
 "Responders should..."
-"Helpers should..."
+"Emergency personnel should..."
 "They should..."
 
-Explain what rescue teams, emergency responders,
-neighbors, or other helpers can do to:
+Explain what responders should do immediately to:
 
-1. Help the affected person.
-2. Check for other people who may also be affected.
-3. Help vulnerable people when appropriate.
-4. Perform safe evacuation when appropriate.
-5. Avoid hazards while helping.
-6. Coordinate emergency assistance when necessary.
+1. Assess the reported situation.
+2. Safely approach the affected location.
+3. Assist the reported person.
+4. Search for other potentially affected people.
+5. Help vulnerable people when appropriate.
+6. Coordinate evacuation when necessary.
+7. Avoid hazards and unsafe areas.
+8. Contact additional emergency services when required.
+
+
+SECTION 2 — PRIORITY AND SAFETY
+
+Explain the main priorities for responders.
+
+Include:
+
+- Immediate safety priorities.
+- Important hazards to watch for.
+- Whether additional emergency teams may be required.
+- Safe coordination and evacuation considerations.
+- Communication and monitoring recommendations.
 
 
 IMPORTANT SAFETY RULES
 
-- Prioritize immediate safety.
-- Adapt the instructions to the disaster type.
+- Prioritize human safety.
+- Adapt the guidance to the reported disaster type.
 - Do not invent facts that are not provided.
 - Do not provide medical diagnosis.
 - Do not recommend dangerous actions.
 - Do not tell untrained people to enter dangerous areas.
+- Do not assume that a location is safe.
+- Recommend trained emergency personnel when appropriate.
 - Keep instructions practical.
 - Use simple English.
-- Keep the response concise because it may be sent by SMS.
+- Keep the response concise because it will be sent by email.
 - Do not use tables.
 - Do not add unnecessary explanations.
 - Do not mention that you are an AI.
@@ -150,36 +152,45 @@ IMPORTANT SAFETY RULES
 
 FORMAT THE RESPONSE EXACTLY LIKE THIS:
 
-1. AFFECTED PERSON
-
-I should ...
-I should ...
-I must ...
-
-2. RESCUE TEAMS AND HELPERS
+1. RESCUE RESPONSE
 
 Rescue teams should ...
+Responders should ...
 They should ...
-Helpers should ...
+
+
+2. PRIORITY AND SAFETY
+
+The priority should be ...
+Responders should ...
+Additional emergency assistance may be required if ...
 """
 
 
     payload = {
+
         "model": GROQ_MODEL,
 
         "messages": [
+
             {
                 "role": "system",
+
                 "content": (
                     "You are a professional emergency "
-                    "disaster-response assistant. "
-                    "Give concise and safety-focused guidance."
+                    "disaster-response assistant helping "
+                    "trained emergency responders. "
+                    "Give concise, practical and "
+                    "safety-focused guidance."
                 )
             },
+
             {
                 "role": "user",
+
                 "content": prompt
             }
+
         ],
 
         "temperature": 0.2,
@@ -189,6 +200,7 @@ Helpers should ...
 
 
     request = urllib.request.Request(
+
         GROQ_URL,
 
         data=json.dumps(
@@ -196,10 +208,12 @@ Helpers should ...
         ).encode("utf-8"),
 
         headers={
-            "Content-Type": "application/json",
-            "Authorization": (
-                f"Bearer {GROQ_API_KEY}"
-            )
+
+            "Content-Type":
+            "application/json",
+
+            "Authorization":
+            f"Bearer {GROQ_API_KEY}"
         },
 
         method="POST"
@@ -213,9 +227,12 @@ Helpers should ...
             timeout=20
         ) as response:
 
-            response_body = response.read().decode(
-                "utf-8"
+            response_body = (
+                response
+                .read()
+                .decode("utf-8")
             )
+
 
         response_data = json.loads(
             response_body
@@ -223,15 +240,11 @@ Helpers should ...
 
 
         ai_response = (
-            response_data[
-                "choices"
-            ][
-                0
-            ][
-                "message"
-            ][
-                "content"
-            ]
+            response_data
+            ["choices"]
+            [0]
+            ["message"]
+            ["content"]
         )
 
 
@@ -254,8 +267,10 @@ Helpers should ...
 
         try:
 
-            error_body = error.read().decode(
-                "utf-8"
+            error_body = (
+                error
+                .read()
+                .decode("utf-8")
             )
 
             print("Error Response:")
@@ -269,14 +284,17 @@ Helpers should ...
 
 
         return (
-            "1. AFFECTED PERSON\n\n"
-            "I should move to a safe location if possible. "
-            "I should avoid immediate hazards and keep my "
-            "phone available for emergency communication.\n\n"
-            "2. RESCUE TEAMS AND HELPERS\n\n"
-            "Rescue teams should assess the reported location "
-            "and safely assist the affected person. They should "
-            "also check whether other people nearby need help."
+            "1. RESCUE RESPONSE\n\n"
+            "Rescue teams should assess the reported "
+            "location and safely assist the affected "
+            "person. Responders should check whether "
+            "other people may also be affected and "
+            "avoid entering unsafe areas without "
+            "appropriate equipment.\n\n"
+            "2. PRIORITY AND SAFETY\n\n"
+            "The priority should be protecting people "
+            "from immediate hazards and coordinating "
+            "appropriate emergency assistance."
         )
 
 
@@ -290,14 +308,17 @@ Helpers should ...
 
 
         return (
-            "1. AFFECTED PERSON\n\n"
-            "I should move to a safe location if possible. "
-            "I should avoid immediate hazards and keep my "
-            "phone available for emergency communication.\n\n"
-            "2. RESCUE TEAMS AND HELPERS\n\n"
-            "Rescue teams should assess the reported location "
-            "and safely assist the affected person. They should "
-            "also check whether other people nearby need help."
+            "1. RESCUE RESPONSE\n\n"
+            "Rescue teams should assess the reported "
+            "location and safely assist the affected "
+            "person. Responders should check whether "
+            "other people may also be affected and "
+            "avoid entering unsafe areas without "
+            "appropriate equipment.\n\n"
+            "2. PRIORITY AND SAFETY\n\n"
+            "The priority should be protecting people "
+            "from immediate hazards and coordinating "
+            "appropriate emergency assistance."
         )
 
 
@@ -332,7 +353,7 @@ def lambda_handler(event, context):
 
     print("====================================")
     print("DISASTER NOTIFICATION LAMBDA")
-    print("AI-POWERED VERSION")
+    print("AI-POWERED AUTHORITY ALERT VERSION")
     print("====================================")
 
 
@@ -524,27 +545,35 @@ def lambda_handler(event, context):
         # ====================================================
 
         ai_response = generate_ai_response(
+
             name=name,
+
             location=location,
+
             disaster_type=disaster_type,
+
             description=description
         )
 
 
         # ====================================================
-        # CREATE FINAL SMS
+        # CREATE AUTHORITY EMAIL
         # ====================================================
 
         message = f"""
-DISASTER EMERGENCY ALERT
+🚨 DISASTER EMERGENCY ALERT
+====================================
+
+INCIDENT INFORMATION
+====================================
 
 Incident ID:
 {incident_id}
 
-Person:
+Affected Person:
 {name}
 
-Phone:
+Contact Phone:
 {phone}
 
 Location:
@@ -559,28 +588,45 @@ Situation:
 Reported At:
 {created_at}
 
-================================
+
+====================================
 AI EMERGENCY RESPONSE
-================================
+====================================
 
 {ai_response}
 
-================================
-SYSTEM NOTICE
-================================
 
-AI-generated emergency guidance.
-Follow instructions from qualified
-emergency responders when available.
+====================================
+RESPONSE REQUIRED
+====================================
+
+Please assess the reported incident
+and coordinate appropriate emergency
+assistance.
+
+Responders should follow their official
+emergency procedures and use appropriate
+safety equipment.
+
+====================================
+SYSTEM NOTICE
+====================================
+
+This alert was generated automatically
+from the AI Disaster Response System.
+
+AI-generated guidance should support,
+not replace, instructions from qualified
+emergency authorities.
 """
 
 
         # ====================================================
-        # PRINT FINAL ALERT
+        # PRINT FINAL EMAIL
         # ====================================================
 
         print("====================================")
-        print("FINAL ALERT MESSAGE")
+        print("FINAL AUTHORITY EMAIL")
         print("====================================")
 
 
@@ -590,25 +636,26 @@ emergency responders when available.
 
 
         # ====================================================
-        # SEND SNS
+        # SEND EMAIL THROUGH SNS
         # ====================================================
 
         sns_success = send_alert(
-            message
+            message,
+            disaster_type
         )
 
 
         if sns_success:
 
             print(
-                "Notification completed for:",
+                "Authority notification completed for:",
                 incident_id
             )
 
         else:
 
             print(
-                "Notification failed for:",
+                "Authority notification failed for:",
                 incident_id
             )
 
@@ -624,7 +671,7 @@ emergency responders when available.
         "body": json.dumps(
             {
                 "message":
-                "AI disaster notification completed successfully"
+                "AI disaster authority notification completed successfully"
             }
         )
     }
